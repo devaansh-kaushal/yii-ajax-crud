@@ -1,5 +1,5 @@
 <?php
-define('UPLOAD_PATH', 'images/');
+define('IMAGE_UPLOAD_PATH', '/basic/images/');
 
 
 

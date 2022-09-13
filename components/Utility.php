@@ -7,19 +7,6 @@ use yii\base\Component;
 class Utility extends Component
 {
 
-    public static function testingfunction($institute, $stream)
-    {
-        $connection = Yii::$app->db;
-        $connection->open();
-        $sql = ' CALL `USP_Extract_FinalAllotement_StudentReport`(:institute,:stream)';
-        $command = $connection->createCommand($sql);
-        $command->bindValue(':institute', $institute);
-        $command->bindValue(':stream', $stream);
-        $res = $command->queryALL();
-        $connection->close();
-        return $res;
-    }
-
     public function createStudent($name = null, $fees = null, $email = null, $profile_pic = null)
     {
         $id = null;
@@ -70,6 +57,24 @@ class Utility extends Component
             $data = $command->queryOne();
             // return $data['outid'];
             return true;
+        }
+        return false;
+    }
+
+    public function createUser($userName = null, $passWord = null)
+    {
+        if (! empty($userName) && ! empty($passWord)) {
+            $connection = Yii::$app->db;
+            $connection->open();
+            $sql = 'CALL create_user(:username,:password);';
+            $command = $connection->createCommand($sql);
+            $command->bindValue(':username', $userName);
+            $command->bindValue(':password', $passWord);
+            $data = $command->execute();
+            if ($data) {
+                return true;
+            }
+            return false;
         }
         return false;
     }

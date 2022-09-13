@@ -38,10 +38,35 @@ class StudentController extends Controller
      *
      * @return string
      */
-    public function actionUploadFile($fName = null)
+    public function actionUploadFile($fName = null, $id = null)
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         if ($fName) {
+            $response = [];
+
+            if (! empty($id) && (empty($_FILES) || ! empty($_FILES))) {
+                $model = Student::findOne($id);
+                if ($model) {
+                    $fileKeysList = explode('/', $model->profile_pic);
+                    $filename = $model->profile_pic;
+
+                    if (count($fileKeysList) > 1) {
+                        foreach ($fileKeysList as $data) {
+                            $filename = $data;
+                        }
+                    }
+                    if (empty($_FILES)) {
+                        $response['status'] = 'OK';
+                        $response['location'] = $filename;
+                        return $response;
+                    }
+                    if (file_exists(\Yii::$app->getBasePath() . '/images/' . $filename)) {
+                        if (! unlink(\Yii::$app->getBasePath() . '/images/' . $filename)) {
+                            throw new \Exception('file not deleted.....');
+                        }
+                    }
+                }
+            }
 
             $filename = $_FILES['file']['name'];
 
@@ -49,7 +74,7 @@ class StudentController extends Controller
             // \Yii::$app->getBasePath()
             // D:\xampp\htdocs\basic
 
-            $location = \Yii::$app->getBasePath()."/images/" . $filename;
+            $location = \Yii::$app->getBasePath() . "/images/" . $filename;
             $uploadOk = 1;
             $newName = null;
 
@@ -60,16 +85,14 @@ class StudentController extends Controller
 
                 if (move_uploaded_file($_FILES['file']['tmp_name'], $location)) {
 
-                    $newName = \Yii::$app->getBasePath()."/images/" . $fName . '-' . $filename;
-                    // rename($location,$newName);
+                    $response['status'] = 'OK';
+                    $response['location'] = $filename;
+                    return $response;
                 } else {
-                    return 0;
+                    $response['status'] = 'NOK';
+                    return $response;
                 }
             }
-            $response = [];
-            $response['status'] = 'OK';
-            $response['location'] = $newName;
-            return $response;
         }
         $response['status'] = 'NOK';
         return $response;
@@ -84,22 +107,18 @@ class StudentController extends Controller
         $response['status'] = 'NOK';
 
         if (isset($_POST['Student']) && ! empty($_POST['Student']) && empty($_POST['Student']['id'])) {
-         
             $post = \Yii::$app->request->post();
             $name = $post['Student']['name'];
             $fees = $post['Student']['fees'];
             $email = $post['Student']['email'];
             $profile_pic = $post['Student']['profile_pic'];
-            
-            // $image = UploadedFile::getInstance($model, $profile_pic);
-            // $image = UploadedFile::getInstanceByName('profile_pic');
-            // \Yii::$app->getBasePath()."/images/" . $fName . '-' . $filename
 
-            echo "<pre>";
-            print_r($profile_pic);
-            die;
-                // $newName = ;
-                    // rename($profile_pic,$newName);
+            $newName = $name . '-' . $profile_pic;
+            $newPath = \Yii::$app->getBasePath() . "/images/" . $newName;
+
+            if (rename(\Yii::$app->getBasePath() . "/images/" . $profile_pic, $newPath)) {
+                $profile_pic = IMAGE_UPLOAD_PATH . $newName;
+            }
 
             $return = \Yii::$app->Utility->createStudent($name, $fees, $email, $profile_pic);
             \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -119,6 +138,23 @@ class StudentController extends Controller
             $fees = $post['Student']['fees'];
             $email = $post['Student']['email'];
             $profile_pic = $post['Student']['profile_pic'];
+
+            $fileKeysList = explode('/', $profile_pic);
+            $filename = $profile_pic;
+
+            if (count($fileKeysList) > 1) {
+                foreach ($fileKeysList as $data) {
+                    $filename = $data;
+                }
+            }
+
+            $newName = $name . '-' . $filename;
+            $newPath = \Yii::$app->getBasePath() . "/images/" . $newName;
+
+            if (rename(\Yii::$app->getBasePath() . "/images/" . $filename, $newPath)) {
+                $profile_pic = IMAGE_UPLOAD_PATH . $newName;
+            }
+
             $return = \Yii::$app->Utility->updateStudent($id, $name, $fees, $email, $profile_pic);
             $dataProvider = Student::find()->all();
             $response['allData'] = $dataProvider;
@@ -148,6 +184,9 @@ class StudentController extends Controller
             $rows .= '<td>' . $data->email . '</td>';
             $rows .= '<td>' . $data->profile_pic . '</td>';
             $rows .= '<td>';
+            $rows .= '<img src="' . $data->profile_pic . '" width="100" height="100">';
+            $rows .= '</td>';
+            $rows .= '<td>';
             $rows .= '<button type="button" id="' . $data->id . '" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" onclick="updateClickId()">Update</button>';
             $rows .= '<button type="button" class="btn btn-danger" id="' . $data->id . '" onclick="DeleteClickID()">Delete</button>';
             $rows .= '</td>';
@@ -158,11 +197,34 @@ class StudentController extends Controller
         return $response;
     }
 
+    public function actionLogin()
+    {
+        die('login action under progress.....');
+    }
+
+    public function actionRegister()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $post = \Yii::$app->request->post();
+        $response = [];
+        if (isset($post['User']) && ! empty($post['User']['username']) && ! empty($post['User']['password'])) {
+            $userName = $post['User']['username'];
+            $passWord = $post['User']['password'];
+            $return = \Yii::$app->Utility->createUser($userName, md5($passWord));
+            if ($return) {
+                $response['error'] = 'NOK';
+                $response['status'] = 'OK';
+                return $response;
+            }
+        }
+        $response['status'] = 'NOK';
+        return $response;
+    }
+
     /**
      * Displays a single Student model.
      *
      * @param int $id
-     *            ID
      * @return string
      * @throws NotFoundHttpException if the model cannot be found
      */

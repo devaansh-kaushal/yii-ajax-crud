@@ -9,6 +9,12 @@ $config = [
         'log'
     ],
     'defaultRoute' => 'student/index',
+    // 'session' => [
+    // 'class' => 'yii\web\DbSession',
+    // 'timeout' => 1440
+    // // 'db' => 'mydb', // the application component ID of the DB connection. Defaults to 'db'.
+    // // 'sessionTable' => 'my_session', // session table name. Defaults to 'session'.
+    // ],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm' => '@vendor/npm-asset'
